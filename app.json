@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Hetu",
+    "slug": "hetu-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "hetu",
+    "backgroundColor": "#0A0F0E",
+    "splash": {
+      "backgroundColor": "#0A0F0E"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.hetu.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D8B7F",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.hetu.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0A0F0E"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
