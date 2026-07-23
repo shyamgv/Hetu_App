@@ -34,6 +34,10 @@ export default function ChatScreen() {
   const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
 
   useEffect(() => {
+    if (id === 'index') {
+      router.replace('/(tabs)/chat');
+      return;
+    }
     if (id) loadConversation(id);
     return () => clearActive();
   }, [id]);
@@ -47,6 +51,10 @@ export default function ChatScreen() {
   async function handleSend() {
     const text = input.trim();
     if (!text || isSending) return;
+    if (!activeConversation) {
+      Alert.alert('Error', 'Conversation not ready. Please try again.');
+      return;
+    }
     setInput('');
     await sendMessage(text);
   }

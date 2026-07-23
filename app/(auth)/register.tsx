@@ -8,6 +8,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -54,73 +56,82 @@ export default function RegisterScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <ImageBackground
+      source={require('../../assets/bg.png')}
+      style={styles.bgImage}
+      resizeMode="cover"
     >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.header}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoLetter}>H</Text>
-          </View>
-          <Text style={styles.title}>Create account</Text>
-          <Text style={styles.subtitle}>Start your journey with Hetu</Text>
-        </View>
+      <SafeAreaView style={styles.screen}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.header}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <Text style={styles.title}>Create account</Text>
+              <Text style={styles.subtitle}>Start your journey with Hetu</Text>
+            </View>
 
-        <View style={styles.form}>
-          <Input
-            label="Full Name"
-            placeholder="Your name"
-            value={fullName}
-            onChangeText={setFullName}
-            autoComplete="name"
-            error={errors.name}
-          />
-          <Input
-            label="Email"
-            placeholder="you@example.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoComplete="email"
-            error={errors.email}
-          />
-          <Input
-            label="Password"
-            placeholder="Min. 6 characters"
-            value={password}
-            onChangeText={setPassword}
-            isPassword
-            autoComplete="new-password"
-            error={errors.password}
-          />
+            <View style={styles.form}>
+              <Input
+                label="Full Name"
+                placeholder="Your name"
+                value={fullName}
+                onChangeText={setFullName}
+                autoComplete="name"
+                error={errors.name}
+              />
+              <Input
+                label="Email"
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoComplete="email"
+                error={errors.email}
+              />
+              <Input
+                label="Password"
+                placeholder="Min. 6 characters"
+                value={password}
+                onChangeText={setPassword}
+                isPassword
+                autoComplete="new-password"
+                error={errors.password}
+              />
 
-          <Button
-            label="Create Account"
-            onPress={handleRegister}
-            loading={loading}
-            style={styles.submitBtn}
-          />
-        </View>
+              <Button
+                label="Create Account"
+                onPress={handleRegister}
+                loading={loading}
+                style={styles.submitBtn}
+              />
+            </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.footerLink}>Sign in</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-    </SafeAreaView>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                <Text style={styles.footerLink}>Sign in</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.bg.primary },
+  bgImage: { flex: 1, width: '100%', height: '100%' },
+  screen: { flex: 1, backgroundColor: 'rgba(10, 15, 29, 0.55)' },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: Spacing.lg,
@@ -128,22 +139,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxxl,
   },
   header: { alignItems: 'center', marginBottom: Spacing.xxl },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: BorderRadius.xl,
-    backgroundColor: Colors.teal[600],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-    shadowColor: Colors.teal[500],
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  logoLetter: { fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white },
-  title: { fontSize: FontSize.xxxl, fontWeight: FontWeight.bold, color: Colors.text.primary, marginBottom: Spacing.xs },
+  logo: { width: 130, height: 65, marginBottom: Spacing.md },
+  title: { fontSize: FontSize.xxxl, fontWeight: FontWeight.bold, color: Colors.white, marginBottom: Spacing.xs },
   subtitle: { fontSize: FontSize.md, color: Colors.text.secondary },
   form: { gap: Spacing.xs },
   submitBtn: { marginTop: Spacing.sm },

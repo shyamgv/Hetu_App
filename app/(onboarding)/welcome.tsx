@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Button } from '../../src/components/ui/Button';
@@ -16,53 +16,66 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoWrap}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoLetter}>H</Text>
+    <ImageBackground
+      source={require('../../assets/bg.png')}
+      style={styles.bgImage}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.container}>
+          {/* Logo */}
+          <View style={styles.logoWrap}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Headlines */}
+          <Text style={styles.eyebrow}>WELCOME TO</Text>
+          <Text style={styles.title}>Hetu</Text>
+          <Text style={styles.tagline}>
+            Causal AI for your Inner journey.
+          </Text>
+
+          {/* Feature pills */}
+          <View style={styles.pills}>
+            {FEATURE_PILLS.map((f) => (
+              <View key={f.label} style={styles.pill}>
+                <Text style={styles.pillLabel}>{f.label}</Text>
+                <Text style={styles.pillDesc}>{f.desc}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Description */}
+          <Text style={styles.desc}>
+            Hetu goes beyond typical AI by combining causal reasoning with centuries of human insight to understand what drives you. Experience personalized clarity, emotional balance, and tailored direction on your journey toward growth.
+          </Text>
+
+          {/* CTA */}
+          <View style={styles.ctas}>
+            <Button
+              label="Let's Get Started"
+              onPress={() => router.push('/(onboarding)/profile')}
+            />
           </View>
         </View>
-
-        {/* Headlines */}
-        <Text style={styles.eyebrow}>WELCOME TO</Text>
-        <Text style={styles.title}>Hetu</Text>
-        <Text style={styles.tagline}>
-          Your AI companion that understands{'\n'}who you truly are
-        </Text>
-
-        {/* Feature pills */}
-        <View style={styles.pills}>
-          {FEATURE_PILLS.map((f) => (
-            <View key={f.label} style={styles.pill}>
-              <Text style={styles.pillLabel}>{f.label}</Text>
-              <Text style={styles.pillDesc}>{f.desc}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Description */}
-        <Text style={styles.desc}>
-          Hetu combines modern AI with a deep understanding of your unique personality to provide support that feels genuinely personal — not generic.
-        </Text>
-
-        {/* CTA */}
-        <View style={styles.ctas}>
-          <Button
-            label="Let's Get Started"
-            onPress={() => router.push('/(onboarding)/profile')}
-          />
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  bgImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   screen: {
     flex: 1,
-    backgroundColor: Colors.bg.primary,
+    backgroundColor: 'rgba(10, 15, 29, 0.55)',
   },
   container: {
     flex: 1,
@@ -72,25 +85,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoWrap: {
-    marginBottom: Spacing.lg,
-  },
-  logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: BorderRadius.xl + 4,
-    backgroundColor: Colors.teal[600],
+    marginBottom: Spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.teal[500],
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 12,
   },
-  logoLetter: {
-    fontSize: 44,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
+  logo: {
+    width: 140,
+    height: 70,
   },
   eyebrow: {
     fontSize: FontSize.xs,
@@ -100,15 +100,16 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   title: {
-    fontSize: 56,
+    fontSize: 52,
     fontWeight: FontWeight.bold,
-    color: Colors.text.primary,
+    color: Colors.white,
     letterSpacing: -1,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   tagline: {
     fontSize: FontSize.lg,
-    color: Colors.text.secondary,
+    fontWeight: FontWeight.semibold,
+    color: Colors.teal[300],
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: Spacing.xl,
@@ -124,8 +125,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.bg.border,
-    backgroundColor: Colors.bg.tertiary,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
     alignItems: 'center',
   },
   pillLabel: {

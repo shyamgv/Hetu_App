@@ -43,7 +43,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting()},</Text>
-            <Text style={styles.name}>{firstName} ✦</Text>
+            <Text style={styles.name}>{firstName}</Text>
           </View>
           <TouchableOpacity
             style={styles.avatarBtn}
@@ -76,7 +76,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recent chats</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/chat/index')}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/chat')}>
                 <Text style={styles.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>

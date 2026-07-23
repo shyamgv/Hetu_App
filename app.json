@@ -4,11 +4,13 @@
     "slug": "hetu-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "dark",
     "scheme": "hetu",
     "backgroundColor": "#0A0F0E",
     "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0A0F0E"
     },
     "ios": {
@@ -17,16 +19,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0D8B7F",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#0A0F0E",
+        "foregroundImage": "./assets/logo.png",
+        "backgroundImage": "./assets/bg.png",
+        "monochromeImage": "./assets/logo.png"
       },
       "package": "com.hetu.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/logo.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -37,7 +39,8 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0A0F0E"
+          "backgroundColor": "#0A0F0E",
+          "image": "./assets/logo.png"
         }
       ]
     ],
