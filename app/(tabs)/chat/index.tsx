@@ -20,9 +20,14 @@ export default function ChatListScreen() {
   }, []);
 
   async function handleNew() {
-    const id = await startNewConversation();
-    router.push(`/(tabs)/chat/${id}`);
+    try {
+      const id = await startNewConversation();
+      router.push(`/(tabs)/chat/${id}`);
+    } catch (err: any) {
+      Alert.alert('Offline Mode', err.message || 'Internet connection required to start a new chat.');
+    }
   }
+
 
   function handleDelete(id: string) {
     Alert.alert(

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { OnboardingService } from '../services/onboarding.service';
+import { SQLiteService } from '../db/sqlite';
 import type { PersonalityOut, ProfileOut } from '../types/api.types';
 
 interface ProfileState {
@@ -20,9 +21,18 @@ export const useProfileStore = create<ProfileState>((set) => ({
   isLoading: false,
 
   loadProfile: async () => {
-    set({ isLoading: true });
+    // 1. Read from SQLite immediately for instant offline render
+    const cachedProfile = SQLiteService.getProfile();
+    if (cachedProfile) {
+      set({ profile: cachedProfile, isLoading: false });
+    } else {
+      set({ isLoading: true });
+    }
+
+    // 2. Fetch fresh profile from network if online
     try {
       const profile = await OnboardingService.getProfile();
+      SQLiteService.saveProfile(profile);
       set({ profile, isLoading: false });
     } catch {
       set({ isLoading: false });
@@ -39,6 +49,10 @@ export const useProfileStore = create<ProfileState>((set) => ({
     }
   },
 
-  setProfile: (profile) => set({ profile }),
+  setProfile: (profile) => {
+    SQLiteService.saveProfile(profile);
+    set({ profile });
+  },
   setPersonality: (personality) => set({ personality }),
 }));
+

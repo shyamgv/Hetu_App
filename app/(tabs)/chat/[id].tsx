@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useChatStore } from '../../../src/store/chat.store';
+import { useAuthStore } from '../../../src/store/auth.store';
 import { MessageBubble, TypingIndicator } from '../../../src/components/chat/MessageBubble';
 import { Colors } from '../../../src/constants/colors';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '../../../src/constants/layout';
@@ -18,6 +19,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
 
+  const isOffline = useAuthStore((s) => s.isOffline);
   const {
     messages, activeConversation, isLoading, isSending, error,
     loadConversation, sendMessage, editLastMessage, stopSending,
@@ -48,9 +50,19 @@ export default function ChatScreen() {
     }
   }, [messages.length, isSending]);
 
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Offline Mode', error);
+    }
+  }, [error]);
+
   async function handleSend() {
     const text = input.trim();
     if (!text || isSending) return;
+    if (isOffline) {
+      Alert.alert('Offline Mode', 'Internet connection is required to chat with Hetu AI.');
+      return;
+    }
     if (!activeConversation) {
       Alert.alert('Error', 'Conversation not ready. Please try again.');
       return;
@@ -71,11 +83,16 @@ export default function ChatScreen() {
 
   async function handleSaveEdit() {
     if (!editContent.trim() || isSending) return;
+    if (isOffline) {
+      Alert.alert('Offline Mode', 'Internet connection is required to edit messages.');
+      return;
+    }
     const text = editContent;
     setEditingMessageId(null);
     setEditContent('');
     await editLastMessage(text);
   }
+
 
   function handleDeleteConversation() {
     if (!activeConversation) return;

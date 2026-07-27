@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { Alert, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,9 +29,14 @@ export default function HomeScreen() {
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
 
   async function handleNewChat() {
-    const id = await startNewConversation();
-    router.push(`/(tabs)/chat/${id}`);
+    try {
+      const id = await startNewConversation();
+      router.push(`/(tabs)/chat/${id}`);
+    } catch (err: any) {
+      Alert.alert('Offline Mode', err.message || 'Internet connection required to start a new chat.');
+    }
   }
+
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
