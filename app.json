@@ -4,7 +4,7 @@
     "slug": "hetu-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/logo_square.png",
     "userInterfaceStyle": "dark",
     "scheme": "hetu",
     "backgroundColor": "#0A0F0E",
@@ -15,17 +15,19 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.hetu.app"
+      "bundleIdentifier": "com.hetu.app",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0A0F0E",
-        "foregroundImage": "./assets/logo.png",
+        "foregroundImage": "./assets/logo_square.png",
         "backgroundImage": "./assets/bg.png",
-        "monochromeImage": "./assets/logo.png"
+        "monochromeImage": "./assets/logo_square.png"
       },
       "package": "com.hetu.app",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/logo.png",
@@ -36,6 +38,7 @@
       "expo-secure-store",
       "expo-sqlite",
       "expo-font",
+      "expo-dev-client",
       [
         "expo-splash-screen",
         {
@@ -46,6 +49,18 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/YOUR_EAS_PROJECT_ID"
+    },
+    "owner": "YOUR_EXPO_ACCOUNT_USERNAME"
   }
 }
