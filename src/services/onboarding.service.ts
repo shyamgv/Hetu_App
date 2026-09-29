@@ -34,4 +34,12 @@ export const OnboardingService = {
     const res = await api.get<PersonalityOut>('/api/onboarding/personality');
     return res.data;
   },
+
+  /**
+   * POST /api/onboarding/complete
+   * Marks onboarding complete server-side without submitting quiz answers
+   */
+  async completeOnboarding(): Promise<void> {
+    await api.post('/api/onboarding/complete');
+  },
 };

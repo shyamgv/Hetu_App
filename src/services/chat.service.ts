@@ -36,12 +36,13 @@ export const ChatService = {
   async sendMessage(
     conversationId: string,
     content: string,
-    useEngine = true,
+    useEngine?: boolean,
     config?: AxiosRequestConfig
   ): Promise<MessageOut> {
     const payload: MessageIn = { content };
+    const suffix = typeof useEngine === 'boolean' ? `?use_engine=${useEngine}` : '';
     const res = await api.post<MessageOut>(
-      `/api/chat/conversations/${conversationId}/messages?use_engine=${useEngine}`,
+      `/api/chat/conversations/${conversationId}/messages${suffix}`,
       payload,
       config
     );
@@ -54,12 +55,13 @@ export const ChatService = {
   async editLastMessage(
     conversationId: string,
     content: string,
-    useEngine = true,
+    useEngine?: boolean,
     config?: AxiosRequestConfig
   ): Promise<MessageOut> {
     const payload: MessageIn = { content };
+    const suffix = typeof useEngine === 'boolean' ? `?use_engine=${useEngine}` : '';
     const res = await api.put<MessageOut>(
-      `/api/chat/conversations/${conversationId}/messages/last?use_engine=${useEngine}`,
+      `/api/chat/conversations/${conversationId}/messages/last${suffix}`,
       payload,
       config
     );
@@ -69,6 +71,15 @@ export const ChatService = {
   /** POST /api/chat/conversations/:id/feedback */
   async submitFeedback(conversationId: string, payload: FeedbackIn): Promise<void> {
     await api.post(`/api/chat/conversations/${conversationId}/feedback`, payload);
+  },
+
+  /**
+   * POST /api/chat/conversations/:id/end
+   * Ends the conversation immediately, cancelling any pending debounced Guna
+   * update timer and running the continuous Guna analysis right away.
+   */
+  async endConversation(conversationId: string): Promise<void> {
+    await api.post(`/api/chat/conversations/${conversationId}/end`);
   },
 };
 

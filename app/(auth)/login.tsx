@@ -42,8 +42,7 @@ export default function LoginScreen() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await login(email.trim().toLowerCase(), password);
-      const user = useAuthStore.getState().user;
+      const user = await login(email.trim().toLowerCase(), password);
       if (user?.onboarding_complete) {
         router.replace('/(tabs)/home');
       } else {
@@ -65,6 +64,7 @@ export default function LoginScreen() {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.screen}>
+        <View style={styles.overlay} />
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
-    backgroundColor: 'rgba(10, 15, 29, 0.55)',
+  backgroundColor: 'transparent',
   },
   scroll: {
     flexGrow: 1,
@@ -181,5 +181,9 @@ const styles = StyleSheet.create({
     color: Colors.teal[400],
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
+  },
+  overlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(6,10,14,0.75)'
   },
 });

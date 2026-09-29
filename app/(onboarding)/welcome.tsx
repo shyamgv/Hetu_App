@@ -23,6 +23,8 @@ export default function WelcomeScreen() {
     >
       <SafeAreaView style={styles.screen}>
         <View style={styles.container}>
+          {/* subtle dark overlay to improve text contrast */}
+          <View style={styles.overlay} />
           {/* Logo */}
           <View style={styles.logoWrap}>
             <Image
@@ -31,7 +33,6 @@ export default function WelcomeScreen() {
               resizeMode="contain"
             />
           </View>
-
           {/* Headlines */}
           <Text style={styles.eyebrow}>WELCOME TO</Text>
           <Text style={styles.title}>Hetu</Text>
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
-    backgroundColor: 'rgba(10, 15, 29, 0.55)',
+  backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
@@ -107,12 +108,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   tagline: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.semibold,
-    color: Colors.teal[300],
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: Spacing.xl,
+  fontSize: FontSize.xl,
+  fontWeight: FontWeight.semibold,
+  color: Colors.teal[300],
+  textAlign: 'center',
+  lineHeight: 28,
+  marginBottom: Spacing.md,
   },
   pills: {
     flexDirection: 'row',
@@ -144,14 +145,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   desc: {
-    fontSize: FontSize.sm,
-    color: Colors.text.secondary,
+    fontSize: FontSize.md,
+    color: Colors.text.primary,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: Spacing.xxl,
-    paddingHorizontal: Spacing.sm,
+    lineHeight: 24,
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
   ctas: {
     width: '100%',
+  },
+  overlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(6,10,14,0.90)',
+    borderRadius: 0,
   },
 });

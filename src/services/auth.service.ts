@@ -26,6 +26,7 @@ export const AuthService = {
     const res = await api.post<Token>('/api/auth/token', params, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
+  console.debug('[AuthService] login response', { status: res.status, dataPresent: !!res.data });
     return res.data;
   },
 
@@ -34,6 +35,7 @@ export const AuthService = {
    */
   async getMe(): Promise<UserOut> {
     const res = await api.get<UserOut>('/api/auth/me');
+  console.debug('[AuthService] getMe response', { status: res.status, userId: res.data?.id, onboarding_complete: res.data?.onboarding_complete });
     return res.data;
   },
 };

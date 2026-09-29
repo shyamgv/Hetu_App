@@ -222,11 +222,15 @@ npx eas-cli update --branch production --message "Fix chat bug"
 - `src/constants/config.ts` — reads `EXPO_PUBLIC_API_URL` from the environment; no hardcoded IP fallback.
 
 # Issues
-- Landing page after creating an account not readable. Background is interrupting with the text. Text size is pretty small for the product description. 
+- Landing page after creating an account not readable. Background is interrupting with the text. Text size is pretty small for the product description.
+- After the profile page before the user is presented with a quiz present with an additional screen asking user saying "In order for me to be a good friend and guide your growth I need to know you a little better. I can do it in 2 ways (1) Jump start by asking you a few situational questions. (2) Gradually understand you better as we keep chatting with each other." A disclaimer should be given in a clearer text and tone that none of this data is going out of their device and we don't use their data to train our algorithms or models. Option 1 should take the user to quiz screen and start the quiz and selecting Option 2 should take them directly to chat screen.
 - Profile page scroll seems to have issues
 - give a previous button on the quiz page 1st question
 - Shuffle the work drive page qualities answers
 - Shuffle the Response to success/falure responses.
 - asking for 3 selections but accepting more without error (food question and success/failure )
-- Energy pattern slider too obvious - change the labeling - slider moving in the increments of 10%
+- Energy pattern slider too obvious - change the labeling - slider moving in the increments of 10% need to make it a continuous slider.
 - Scroll working as expected in "Decesion making style screen"
+- Add ability to end conversation
+- Add background image in the choose page
+- Why is it directly bringing up the Welcome page instead of the sign-in page? Is it caching somewhere?

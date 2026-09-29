@@ -13,10 +13,12 @@ interface ChatState {
   isSending: boolean;
   isLoading: boolean;
   error: string | null;
+  defaultUseHetuEngine: boolean;
 
   // Actions
   loadConversations: () => Promise<void>;
   startNewConversation: () => Promise<string>; // returns conversation ID
+  setDefaultUseHetuEngine: (v: boolean) => void;
   loadConversation: (id: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   sendMessage: (content: string, useEngine?: boolean) => Promise<void>;
@@ -24,6 +26,7 @@ interface ChatState {
   stopSending: () => void;
   clearActive: () => void;
   submitFeedback: (rating: number, comment?: string) => Promise<void>;
+  endConversation: (id?: string) => Promise<void>;
 }
 
 async function syncPendingDeletions() {
@@ -47,6 +50,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isSending: false,
   isLoading: false,
   error: null,
+  defaultUseHetuEngine: true,
+
+
 
   loadConversations: async () => {
     // 1. Read from SQLite immediately for instant offline render
@@ -105,6 +111,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  setDefaultUseHetuEngine: (v: boolean) => set({ defaultUseHetuEngine: v }),
+
   loadConversation: async (id) => {
     // 1. Read from SQLite immediately
     const cachedConv = SQLiteService.getConversation(id);
@@ -152,9 +160,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
 
-  sendMessage: async (content, useEngine = true) => {
+  sendMessage: async (content, useEngine?: boolean) => {
     const { activeConversation } = get();
     if (!activeConversation) return;
+    const useHetu = typeof useEngine === 'boolean' ? useEngine : get().defaultUseHetuEngine;
 
     // Optimistically add user message
     const optimisticUserMsg: MessageOut = {
@@ -178,7 +187,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const aiMsg = await ChatService.sendMessage(
         activeConversation.id,
         content,
-        useEngine,
+        useHetu,
         { signal: controller.signal }
       );
 
@@ -228,7 +237,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  editLastMessage: async (content, useEngine = true) => {
+  editLastMessage: async (content, useEngine?: boolean) => {
     const { activeConversation, messages } = get();
     if (!activeConversation) return;
 
@@ -251,10 +260,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
 
     try {
+      const useHetu = typeof useEngine === 'boolean' ? useEngine : get().defaultUseHetuEngine;
       const aiMsg = await ChatService.editLastMessage(
         activeConversation.id,
         content,
-        useEngine,
+        useHetu,
         { signal: controller.signal }
       );
 
@@ -322,6 +332,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Catch offline error gracefully
     }
   },
+
+  /**
+   * Ends a conversation immediately, cancelling any pending debounced Guna
+   * update timer and running the continuous Guna analysis right away.
+   * Defaults to the currently active conversation if no id is given.
+   * Safe to call multiple times / when offline — errors are swallowed.
+   */
+  endConversation: async (id?: string) => {
+    const conversationId = id ?? get().activeConversation?.id;
+    if (!conversationId) return;
+    try {
+      await ChatService.endConversation(conversationId);
+    } catch (e) {
+      console.warn('[Chat] Failed to end conversation:', e);
+    } finally {
+      // Reset the engine flag back to its normal default once a conversation
+      // has ended, regardless of whether it was skipped-quiz or not.
+      set({ defaultUseHetuEngine: true });
+    }
+  },
 }));
+
+
 
 

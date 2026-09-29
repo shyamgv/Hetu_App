@@ -46,9 +46,10 @@ export default function ProfileScreen() {
           ? hobbiesText.split(',').map((h) => h.trim()).filter(Boolean)
           : [],
       };
-      const saved = await OnboardingService.upsertProfile(payload);
-      setProfile(saved);
-      router.push('/(onboarding)/quiz');
+  const saved = await OnboardingService.upsertProfile(payload);
+  setProfile(saved);
+  // Show the user a choice before starting the quiz
+  router.push({ pathname: '/(onboarding)/choose' } as any);
     } catch {
       Alert.alert('Error', 'Failed to save profile. Please try again.');
     } finally {
@@ -132,16 +133,12 @@ export default function ProfileScreen() {
         />
 
         <Button
-          label="Continue to Quiz →"
+          label="Continue →"
           onPress={handleNext}
           loading={loading}
           style={styles.nextBtn}
         />
-        <Button
-          label="Skip for now"
-          onPress={() => router.push('/(onboarding)/quiz')}
-          variant="ghost"
-        />
+
       </ScrollView>
     </SafeAreaView>
   );

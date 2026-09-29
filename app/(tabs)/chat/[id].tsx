@@ -23,7 +23,7 @@ export default function ChatScreen() {
   const {
     messages, activeConversation, isLoading, isSending, error,
     loadConversation, sendMessage, editLastMessage, stopSending,
-    deleteConversation, submitFeedback, clearActive,
+    deleteConversation, submitFeedback, clearActive, endConversation,
   } = useChatStore();
 
   const [input, setInput] = useState('');
@@ -113,6 +113,24 @@ export default function ChatScreen() {
     );
   }
 
+  function handleEndConversation() {
+    if (!activeConversation) return;
+    Alert.alert(
+      'End Conversation',
+      'This will finish the conversation and let Hetu analyse it to better understand you. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'End Conversation',
+          onPress: async () => {
+            await endConversation(activeConversation.id);
+            router.back();
+          },
+        },
+      ]
+    );
+  }
+
   async function handleFeedbackSubmit() {
     if (rating === 0) { Alert.alert('Rate the conversation', 'Please select a rating.'); return; }
     await submitFeedback(rating);
@@ -147,6 +165,9 @@ export default function ChatScreen() {
         </View>
         <TouchableOpacity onPress={() => setShowFeedback(true)} style={styles.menuBtn}>
           <Ionicons name="star-outline" size={22} color={Colors.text.secondary} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleEndConversation} style={styles.menuBtn}>
+          <Ionicons name="checkmark-done-outline" size={22} color={Colors.text.secondary} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDeleteConversation} style={styles.menuBtn}>
           <Ionicons name="trash-outline" size={22} color={Colors.text.secondary} />

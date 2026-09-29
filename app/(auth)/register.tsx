@@ -62,6 +62,7 @@ export default function RegisterScreen() {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.screen}>
+        <View style={styles.overlay} />
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -147,4 +148,5 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.xl },
   footerText: { color: Colors.text.secondary, fontSize: FontSize.md },
   footerLink: { color: Colors.teal[400], fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,10,14,0.75)' },
 });
