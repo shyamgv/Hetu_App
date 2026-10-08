@@ -13,6 +13,17 @@ import { MessageBubble, TypingIndicator } from '../../../src/components/chat/Mes
 import { Colors } from '../../../src/constants/colors';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '../../../src/constants/layout';
 import type { MessageOut } from '../../../src/types/api.types';
+import {
+  preloadVoiceModel,
+  startRecording,
+  stopRecordingAndTranscribe,
+  cancelRecording,
+} from '../../../src/services/voice.service';
+
+// Voice input is iOS-first for now — Android's MediaRecorder can't emit raw
+// PCM/WAV, which whisper.cpp needs, so the mic button is hidden there until
+// a transcoding path is added.
+const VOICE_INPUT_SUPPORTED = Platform.OS === 'ios';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,6 +44,9 @@ export default function ChatScreen() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
 
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
   const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
 
   useEffect(() => {
@@ -43,6 +57,16 @@ export default function ChatScreen() {
     if (id) loadConversation(id);
     return () => clearActive();
   }, [id]);
+
+  // Pre-warm the on-device whisper model so the first recording doesn't stall.
+  useEffect(() => {
+    if (VOICE_INPUT_SUPPORTED) {
+      preloadVoiceModel().catch((e) => console.warn('[Voice] Preload failed:', e));
+    }
+    return () => {
+      cancelRecording().catch(() => {});
+    };
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -56,6 +80,35 @@ export default function ChatScreen() {
     }
   }, [error]);
 
+  async function handleMicPress() {
+    if (isTranscribing) return;
+
+    if (isRecordingVoice) {
+      // Stop & transcribe
+      setIsRecordingVoice(false);
+      setIsTranscribing(true);
+      try {
+        const text = await stopRecordingAndTranscribe();
+        if (text) {
+          // Populate the input for the user to review/edit before sending.
+          setInput((prev) => (prev ? `${prev} ${text}` : text));
+        }
+      } catch (e: any) {
+        Alert.alert('Voice input failed', e?.message || 'Could not transcribe your recording.');
+      } finally {
+        setIsTranscribing(false);
+      }
+      return;
+    }
+
+    try {
+      await startRecording();
+      setIsRecordingVoice(true);
+    } catch (e: any) {
+      Alert.alert('Microphone unavailable', e?.message || 'Could not start recording.');
+    }
+  }
+
   async function handleSend() {
     const text = input.trim();
     if (!text || isSending) return;
@@ -68,6 +121,7 @@ export default function ChatScreen() {
       return;
     }
     setInput('');
+
     await sendMessage(text);
   }
 
@@ -215,7 +269,7 @@ export default function ChatScreen() {
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
-            placeholder="Message Hetu…"
+            placeholder={isRecordingVoice ? 'Listening…' : 'Message Hetu…'}
             placeholderTextColor={Colors.text.tertiary}
             value={input}
             onChangeText={setInput}
@@ -224,6 +278,26 @@ export default function ChatScreen() {
             editable={!isSending}
             onSubmitEditing={handleSend}
           />
+          {VOICE_INPUT_SUPPORTED && (
+            <TouchableOpacity
+              style={[
+                styles.micBtn,
+                isRecordingVoice && styles.micBtnActive,
+              ]}
+              onPress={handleMicPress}
+              disabled={isSending || isTranscribing}
+            >
+              {isTranscribing ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Ionicons
+                  name={isRecordingVoice ? 'radio-button-on' : 'mic-outline'}
+                  size={20}
+                  color={Colors.white}
+                />
+              )}
+            </TouchableOpacity>
+          )}
           {isSending ? (
             <TouchableOpacity style={styles.stopBtn} onPress={stopSending}>
               <Ionicons name="square" size={16} color={Colors.white} />
@@ -311,6 +385,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.teal[600], alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { backgroundColor: Colors.bg.tertiary },
+  micBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: Colors.bg.tertiary, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: Colors.bg.border,
+  },
+  micBtnActive: {
+    backgroundColor: Colors.urgency.high, borderColor: Colors.urgency.high,
+  },
   stopBtn: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: Colors.urgency.high, alignItems: 'center', justifyContent: 'center',

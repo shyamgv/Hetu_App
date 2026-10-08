@@ -16,7 +16,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hetu.app",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Hetu uses your microphone to let you talk to your AI companion with your voice."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +30,8 @@
       },
       "package": "com.hetu.app",
       "predictiveBackGestureEnabled": false,
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": ["RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/logo.png",
@@ -39,6 +43,12 @@
       "expo-sqlite",
       "expo-font",
       "expo-dev-client",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Hetu uses your microphone to let you talk to your AI companion with your voice."
+        }
+      ],
       [
         "expo-splash-screen",
         {
