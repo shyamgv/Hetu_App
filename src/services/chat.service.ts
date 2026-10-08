@@ -6,31 +6,31 @@ import type { ConversationOut, FeedbackIn, MessageIn, MessageOut } from '../type
  * Chat service — wraps /api/chat/* endpoints
  */
 export const ChatService = {
-  /** POST /api/chat/conversations — create new conversation */
+  /** POST /chat/conversations — create new conversation */
   async startConversation(): Promise<ConversationOut> {
-    const res = await api.post<ConversationOut>('/api/chat/conversations');
+    const res = await api.post<ConversationOut>('/chat/conversations');
     return res.data;
   },
 
-  /** GET /api/chat/conversations — list all user conversations */
+  /** GET /chat/conversations — list all user conversations */
   async listConversations(): Promise<ConversationOut[]> {
-    const res = await api.get<ConversationOut[]>('/api/chat/conversations');
+    const res = await api.get<ConversationOut[]>('/chat/conversations');
     return res.data;
   },
 
-  /** GET /api/chat/conversations/:id — get single conversation with messages */
+  /** GET /chat/conversations/:id — get single conversation with messages */
   async getConversation(id: string): Promise<ConversationOut> {
-    const res = await api.get<ConversationOut>(`/api/chat/conversations/${id}`);
+    const res = await api.get<ConversationOut>(`/chat/conversations/${id}`);
     return res.data;
   },
 
-  /** DELETE /api/chat/conversations/:id — delete conversation */
+  /** DELETE /chat/conversations/:id — delete conversation */
   async deleteConversation(id: string): Promise<void> {
-    await api.delete(`/api/chat/conversations/${id}`);
+    await api.delete(`/chat/conversations/${id}`);
   },
 
   /**
-   * POST /api/chat/conversations/:id/messages — send user message, get AI reply
+   * POST /chat/conversations/:id/messages — send user message, get AI reply
    * use_engine=true enables the full Hetu Engine (Guna analysis, wellness output)
    */
   async sendMessage(
@@ -42,7 +42,7 @@ export const ChatService = {
     const payload: MessageIn = { content };
     const suffix = typeof useEngine === 'boolean' ? `?use_engine=${useEngine}` : '';
     const res = await api.post<MessageOut>(
-      `/api/chat/conversations/${conversationId}/messages${suffix}`,
+      `/chat/conversations/${conversationId}/messages${suffix}`,
       payload,
       config
     );
@@ -50,7 +50,7 @@ export const ChatService = {
   },
 
   /**
-   * PUT /api/chat/conversations/:id/messages/last — edit last user message and get new AI reply
+   * PUT /chat/conversations/:id/messages/last — edit last user message and get new AI reply
    */
   async editLastMessage(
     conversationId: string,
@@ -61,25 +61,25 @@ export const ChatService = {
     const payload: MessageIn = { content };
     const suffix = typeof useEngine === 'boolean' ? `?use_engine=${useEngine}` : '';
     const res = await api.put<MessageOut>(
-      `/api/chat/conversations/${conversationId}/messages/last${suffix}`,
+      `/chat/conversations/${conversationId}/messages/last${suffix}`,
       payload,
       config
     );
     return res.data;
   },
 
-  /** POST /api/chat/conversations/:id/feedback */
+  /** POST /chat/conversations/:id/feedback */
   async submitFeedback(conversationId: string, payload: FeedbackIn): Promise<void> {
-    await api.post(`/api/chat/conversations/${conversationId}/feedback`, payload);
+    await api.post(`/chat/conversations/${conversationId}/feedback`, payload);
   },
 
   /**
-   * POST /api/chat/conversations/:id/end
+   * POST /chat/conversations/:id/end
    * Ends the conversation immediately, cancelling any pending debounced Guna
    * update timer and running the continuous Guna analysis right away.
    */
   async endConversation(conversationId: string): Promise<void> {
-    await api.post(`/api/chat/conversations/${conversationId}/end`);
+    await api.post(`/chat/conversations/${conversationId}/end`);
   },
 };
 
