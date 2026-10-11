@@ -45,6 +45,13 @@ export default function QuizScreen() {
       Alert.alert('Please answer', 'Select an answer to continue.');
       return;
     }
+    if (current.question_type === 'word_selection') {
+      const selected = (answers[current.id]?.selected_words ?? []) as string[];
+      if (selected.length !== 3) {
+        Alert.alert('Select exactly 3', 'Please make exactly 3 selections to continue.');
+        return;
+      }
+    }
     if (isLast) {
       handleSubmit();
     } else {
@@ -95,7 +102,7 @@ export default function QuizScreen() {
               Step 2 of 2 · Question {currentIdx + 1}/{questions.length}
             </Text>
           </View>
-          <Text style={styles.category}>{current.personality_category?.toUpperCase()}</Text>
+          {/* <Text style={styles.category}>{current.personality_category?.toUpperCase()}</Text> */}
           <Text style={styles.question}>{questionText}</Text>
         </View>
 
@@ -163,20 +170,25 @@ function QuestionAnswerBlock({
       // Stable deterministic shuffle per question (not truly random — avoids re-renders)
       const displayWords = [...allWords].sort();
       const selected = (current?.selected_words ?? []) as string[];
+      const maxReached = selected.length >= 3;
       return (
         <View style={styles.chipGrid}>
           {displayWords.map((w) => {
             const isSelected = selected.includes(w);
+            const disabled = !isSelected && maxReached;
             return (
               <TouchableOpacity
                 key={w}
-                style={[styles.chip, isSelected && styles.chipSelected]}
+                style={[styles.chip, isSelected && styles.chipSelected, disabled && styles.chipDisabled]}
                 onPress={() => {
-                  const next = isSelected
-                    ? selected.filter((s) => s !== w)
-                    : [...selected, w];
-                  onAnswer({ selected_words: next });
+                  if (isSelected) {
+                    onAnswer({ selected_words: selected.filter((s) => s !== w) });
+                  } else if (!maxReached) {
+                    onAnswer({ selected_words: [...selected, w] });
+                  }
+                  // If maxReached and not selected, ignore the tap (limit enforced).
                 }}
+                disabled={disabled}
               >
                 <Text style={[styles.chipText, isSelected && styles.chipTextSel]}>{w}</Text>
               </TouchableOpacity>
@@ -273,7 +285,7 @@ function QuestionAnswerBlock({
     case 'image_selection': {
       return (
         <View style={styles.optionList}>
-          {(['A', 'B', 'C'] as const).map((key) => {
+          {(['B', 'A', 'C'] as const).map((key) => {
             const opt = opts[key] as { image?: string; description?: string } | undefined;
             if (!opt) return null;
             const isSelected = (current?.choice as string) === key;
@@ -488,6 +500,7 @@ const styles = StyleSheet.create({
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.lg },
   chip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: 99, backgroundColor: Colors.bg.tertiary, borderWidth: 1, borderColor: Colors.bg.border },
   chipSelected: { backgroundColor: Colors.teal[600] + '30', borderColor: Colors.teal[500] },
+  chipDisabled: { opacity: 0.4 },
   chipText: { color: Colors.text.secondary, fontSize: FontSize.sm },
   chipTextSel: { color: Colors.teal[300], fontWeight: FontWeight.semibold },
   selectHint: { width: '100%', textAlign: 'center', color: Colors.text.tertiary, fontSize: FontSize.xs, marginTop: Spacing.xs },

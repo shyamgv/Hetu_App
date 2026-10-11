@@ -19,7 +19,7 @@ export default function ChooseHowToStart() {
       <View style={styles.container}>
         <Text style={styles.title}>How would you like Hetu to get to know you?</Text>
         <Text style={styles.subtitle}>
-          I can learn about you quickly, or gradually while we chat. Your data stays on your device — we do not use it to train external models.
+          I can learn about you quickly if you answer a few questions OR gradually, while we chat.
         </Text>
 
         <View style={styles.buttons}>
@@ -60,7 +60,7 @@ export default function ChooseHowToStart() {
         <View style={styles.disclaimer}>
           <Text style={styles.disclaimerTitle}>Privacy note</Text>
           <Text style={styles.disclaimerText}>
-            All answers remain on your device. We never send your raw quiz answers to third parties or use them to train public models.
+            We do NOT send any of your data to third parties or use them to train models. Your data is used to only benefit you and NEVER shared with anyone else.
           </Text>
         </View>
       </View>
