@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '../src/constants/colors';
+import '../src/services/cognito'; // configures Amplify Auth before any screen signs in
 
 SplashScreen.preventAutoHideAsync();
 

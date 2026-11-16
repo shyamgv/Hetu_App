@@ -1,189 +1,104 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Image,
-  ImageBackground,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Text, TouchableOpacity, Alert, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/auth.store';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
+import { AuthScreen, authFooterStyles } from '../../src/components/auth/AuthScreen';
 import { Colors } from '../../src/constants/colors';
-import { BorderRadius, FontSize, FontWeight, Spacing } from '../../src/constants/layout';
+import { FontSize, Spacing } from '../../src/constants/layout';
+import { getErrorMessage } from '../../src/utils/errors';
+import { normalizeEmail, validateEmail } from '../../src/utils/validation';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const params = useLocalSearchParams<{ email?: string }>();
+  const login = useAuthStore((s) => s.login);
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(params.email ?? '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   function validate() {
     const e: typeof errors = {};
-    if (!email.trim()) e.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email';
+    e.email = validateEmail(email);
     if (!password) e.password = 'Password is required';
-    else if (password.length < 6) e.password = 'Password must be at least 6 characters';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    return !e.email && !e.password;
   }
 
   async function handleLogin() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const user = await login(email.trim().toLowerCase(), password);
-      if (user?.onboarding_complete) {
-        router.replace('/(tabs)/home');
+      const address = normalizeEmail(email);
+      const result = await login(address, password);
+
+      if (result.status === 'signed_in') {
+        router.replace(result.user.onboarding_complete ? '/(tabs)/home' : '/(onboarding)/welcome');
+      } else if (result.status === 'confirm_sign_up') {
+        // Registered but never verified: a new code was just sent
+        router.push({ pathname: '/(auth)/verify-email', params: { email: address, unverified: '1' } });
       } else {
-        router.replace('/(onboarding)/welcome');
+        router.push({ pathname: '/(auth)/forgot-password', params: { email: address } });
       }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-        ?? 'Login failed. Check your credentials.';
-      Alert.alert('Login failed', msg);
+      Alert.alert('Login failed', getErrorMessage(err, 'Login failed. Check your credentials.'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <ImageBackground
-      source={require('../../assets/bg.png')}
-      style={styles.bgImage}
-      resizeMode="cover"
+    <AuthScreen
+      title="Welcome back"
+      subtitle="Sign in to Hetu"
+      footer={
+        <>
+          <Text style={authFooterStyles.text}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <Text style={authFooterStyles.link}>Create one</Text>
+          </TouchableOpacity>
+        </>
+      }
     >
-      <SafeAreaView style={styles.screen}>
-        <View style={styles.overlay} />
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      <Input
+        label="Email"
+        placeholder="you@example.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        error={errors.email}
+        autoComplete="email"
+      />
+      <Input
+        label="Password"
+        placeholder="••••••••"
+        value={password}
+        onChangeText={setPassword}
+        isPassword
+        error={errors.password}
+        autoComplete="password"
+      />
+
+      <View style={styles.forgotRow}>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({ pathname: '/(auth)/forgot-password', params: { email: normalizeEmail(email) } })
+          }
         >
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <Image
-                source={require('../../assets/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.title}>Welcome back</Text>
-              <Text style={styles.subtitle}>Sign in to Hetu</Text>
-            </View>
+          <Text style={styles.forgotText}>Forgot password?</Text>
+        </TouchableOpacity>
+      </View>
 
-            {/* Form */}
-            <View style={styles.form}>
-              <Input
-                label="Email"
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                error={errors.email}
-                autoComplete="email"
-              />
-              <Input
-                label="Password"
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                isPassword
-                error={errors.password}
-                autoComplete="password"
-              />
-
-              <Button
-                label="Sign In"
-                onPress={handleLogin}
-                loading={loading}
-                style={styles.loginBtn}
-              />
-            </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-                <Text style={styles.footerLink}>Create one</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ImageBackground>
+      <Button label="Sign In" onPress={handleLogin} loading={loading} style={styles.loginBtn} />
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  bgImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  screen: {
-    flex: 1,
-  backgroundColor: 'transparent',
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.lg,
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxxl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: Spacing.xxl,
-  },
-  logo: {
-    width: 130,
-    height: 65,
-    marginBottom: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.xxxl,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    fontSize: FontSize.md,
-    color: Colors.text.secondary,
-  },
-  form: {
-    gap: Spacing.xs,
-  },
-  loginBtn: {
-    marginTop: Spacing.sm,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: Spacing.xl,
-  },
-  footerText: {
-    color: Colors.text.secondary,
-    fontSize: FontSize.md,
-  },
-  footerLink: {
-    color: Colors.teal[400],
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.semibold,
-  },
-  overlay: {
-  ...StyleSheet.absoluteFillObject,
-  backgroundColor: 'rgba(6,10,14,0.75)'
-  },
+  forgotRow: { alignItems: 'flex-end', marginTop: -Spacing.xs, marginBottom: Spacing.xs },
+  forgotText: { color: Colors.teal[400], fontSize: FontSize.sm },
+  loginBtn: { marginTop: Spacing.sm },
 });

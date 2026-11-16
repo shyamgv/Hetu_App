@@ -11,6 +11,7 @@ export interface UserRegisterPayload {
   full_name?: string;
 }
 
+/** Response of the backend's legacy password sign-in; no longer used by the app. */
 export interface Token {
   access_token: string;
   token_type: string;
@@ -22,6 +23,18 @@ export interface UserOut {
   full_name: string | null;
   onboarding_complete: boolean;
   created_at: string;
+}
+
+// ---- Usage ----
+
+/** GET /usage/today — the user's daily allowance, in credits (weighted tokens). */
+export interface UsageOut {
+  plan: string;
+  plan_name: string;
+  daily_limit: number;
+  used: number;
+  remaining: number;
+  reset_at: string; // when today's allowance starts over (midnight UTC)
 }
 
 // ---- Onboarding ----

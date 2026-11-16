@@ -4,8 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../src/constants/colors';
 import { FontSize } from '../../src/constants/layout';
 import { OfflineBanner } from '../../src/components/common/OfflineBanner';
+import { useRequireAuth } from '../../src/hooks/useRequireAuth';
 
 export default function TabsLayout() {
+  useRequireAuth();
+
   return (
     <View style={{ flex: 1 }}>
       <OfflineBanner />

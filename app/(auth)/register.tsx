@@ -1,27 +1,23 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Image,
-  ImageBackground,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/auth.store';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
+import { AuthScreen, authFooterStyles } from '../../src/components/auth/AuthScreen';
 import { Colors } from '../../src/constants/colors';
-import { BorderRadius, FontSize, FontWeight, Spacing } from '../../src/constants/layout';
+import { FontSize, Spacing } from '../../src/constants/layout';
+import { getErrorMessage } from '../../src/utils/errors';
+import {
+  PASSWORD_HINT,
+  normalizeEmail,
+  validateEmail,
+  validateNewPassword,
+} from '../../src/utils/validation';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register } = useAuthStore();
+  const register = useAuthStore((s) => s.register);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,121 +28,89 @@ export default function RegisterScreen() {
   function validate() {
     const e: typeof errors = {};
     if (!fullName.trim()) e.name = 'Name is required';
-    if (!email.trim()) e.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email';
-    if (!password) e.password = 'Password is required';
-    else if (password.length < 6) e.password = 'Password must be at least 6 characters';
+    e.email = validateEmail(email);
+    e.password = validateNewPassword(password);
     setErrors(e);
-    return Object.keys(e).length === 0;
+    return !e.name && !e.email && !e.password;
   }
 
   async function handleRegister() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await register(email.trim().toLowerCase(), password, fullName.trim());
-      router.replace('/(onboarding)/welcome');
+      const address = normalizeEmail(email);
+      const result = await register(address, password, fullName.trim());
+
+      if (result.status === 'signed_in') {
+        router.replace('/(onboarding)/welcome');
+      } else if (result.status === 'confirm_sign_up') {
+        router.push({ pathname: '/(auth)/verify-email', params: { email: address } });
+      } else if (result.status === 'account_exists') {
+        Alert.alert('Account exists', 'An account with this email already exists.', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign in',
+            onPress: () => router.replace({ pathname: '/(auth)/login', params: { email: address } }),
+          },
+        ]);
+      } else {
+        router.replace({ pathname: '/(auth)/login', params: { email: address } });
+      }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-        ?? 'Registration failed. Try again.';
-      Alert.alert('Registration failed', msg);
+      Alert.alert('Registration failed', getErrorMessage(err, 'Registration failed. Try again.'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <ImageBackground
-      source={require('../../assets/bg.png')}
-      style={styles.bgImage}
-      resizeMode="cover"
+    <AuthScreen
+      title="Create account"
+      subtitle="Start your journey with Hetu"
+      footer={
+        <>
+          <Text style={authFooterStyles.text}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+            <Text style={authFooterStyles.link}>Sign in</Text>
+          </TouchableOpacity>
+        </>
+      }
     >
-      <SafeAreaView style={styles.screen}>
-        <View style={styles.overlay} />
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.header}>
-              <Image
-                source={require('../../assets/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.title}>Create account</Text>
-              <Text style={styles.subtitle}>Start your journey with Hetu</Text>
-            </View>
+      <Input
+        label="Full Name"
+        placeholder="Your name"
+        value={fullName}
+        onChangeText={setFullName}
+        autoComplete="name"
+        autoCapitalize="words"
+        error={errors.name}
+      />
+      <Input
+        label="Email"
+        placeholder="you@example.com"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoComplete="email"
+        error={errors.email}
+      />
+      <Input
+        label="Password"
+        placeholder="Choose a password"
+        value={password}
+        onChangeText={setPassword}
+        isPassword
+        autoComplete="new-password"
+        error={errors.password}
+      />
+      {!errors.password && <Text style={styles.hint}>{PASSWORD_HINT}</Text>}
 
-            <View style={styles.form}>
-              <Input
-                label="Full Name"
-                placeholder="Your name"
-                value={fullName}
-                onChangeText={setFullName}
-                autoComplete="name"
-                error={errors.name}
-              />
-              <Input
-                label="Email"
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoComplete="email"
-                error={errors.email}
-              />
-              <Input
-                label="Password"
-                placeholder="Min. 6 characters"
-                value={password}
-                onChangeText={setPassword}
-                isPassword
-                autoComplete="new-password"
-                error={errors.password}
-              />
-
-              <Button
-                label="Create Account"
-                onPress={handleRegister}
-                loading={loading}
-                style={styles.submitBtn}
-              />
-            </View>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-                <Text style={styles.footerLink}>Sign in</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ImageBackground>
+      <Button label="Create Account" onPress={handleRegister} loading={loading} style={styles.submitBtn} />
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  bgImage: { flex: 1, width: '100%', height: '100%' },
-  screen: { flex: 1, backgroundColor: 'rgba(10, 15, 29, 0.55)' },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.lg,
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxxl,
-  },
-  header: { alignItems: 'center', marginBottom: Spacing.xxl },
-  logo: { width: 130, height: 65, marginBottom: Spacing.md },
-  title: { fontSize: FontSize.xxxl, fontWeight: FontWeight.bold, color: Colors.white, marginBottom: Spacing.xs },
-  subtitle: { fontSize: FontSize.md, color: Colors.text.secondary },
-  form: { gap: Spacing.xs },
+  hint: { color: Colors.text.tertiary, fontSize: FontSize.xs, marginTop: -Spacing.sm, marginBottom: Spacing.sm },
   submitBtn: { marginTop: Spacing.sm },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.xl },
-  footerText: { color: Colors.text.secondary, fontSize: FontSize.md },
-  footerLink: { color: Colors.teal[400], fontSize: FontSize.md, fontWeight: FontWeight.semibold },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,10,14,0.75)' },
 });

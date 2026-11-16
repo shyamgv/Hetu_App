@@ -75,6 +75,8 @@ cp .env.example .env
 Edit `.env`:
 ```
 EXPO_PUBLIC_API_URL=http://<your-machine-LAN-IP>:8000
+EXPO_PUBLIC_COGNITO_USER_POOL_ID=<mobile_cognito_user_pool_id from terraform output>
+EXPO_PUBLIC_COGNITO_CLIENT_ID=<mobile_cognito_client_id from terraform output>
 ```
 
 > Use your computer's **LAN IP** (not `localhost`/`127.0.0.1`) so physical devices/emulators on the same network can reach your backend. Find it with `ipconfig getifaddr en0` (macOS Wi-Fi) or `ipconfig` (Windows).
@@ -82,6 +84,23 @@ EXPO_PUBLIC_API_URL=http://<your-machine-LAN-IP>:8000
 > `.env` is git-ignored — every developer/machine keeps their own local value. There is **no hardcoded fallback IP** in the code anymore (`src/constants/config.ts`); if `EXPO_PUBLIC_API_URL` is missing you'll see a console warning and it'll fall back to `http://localhost:8000`.
 >
 > Changing `.env` requires a full restart of `expo start` (env vars are read at bundler start, not hot-reloaded).
+>
+> **EAS builds don't read your local `.env`.** Set the same three variables for each build profile (in `eas.json` under `env`, or as EAS environment variables), with `EXPO_PUBLIC_API_URL` pointing at the API Gateway mobile route (e.g. `https://api.hetuengine.ai/app`).
+
+### Authentication
+Sign-up, sign-in, email verification and password reset run directly against an **Amazon Cognito** user pool (`hetu-app-users`, see `hetu-terraform/cognito_app.tf`) through AWS Amplify's Auth module (`src/services/auth.service.ts`). No password ever reaches our backend.
+
+- The app sends the Cognito **access token** on every API request (`src/services/api.ts`). The first call to `GET /auth/me` creates the user in the backend; later calls just look it up.
+- Tokens are kept in the device's secure storage (`src/services/secureStorage.ts`). Access tokens last an hour: on a 401 the API client refreshes the token and retries once, and only signs the user out if the session can't be renewed (being offline never does).
+- Sign-up flow: `register` → emailed code on `verify-email` → signed in automatically. `forgot-password` handles resets.
+- Each user has a daily allowance of LLM usage; `GET /usage/today` feeds the meter on the Profile tab, and a chat reply of HTTP 429 means the limit was reached or the previous message is still being answered.
+- Amplify's sign-in uses native code, so **the dev client must be rebuilt** after pulling this change (§4).
+
+### Tests
+```bash
+npm test          # jest-expo: auth service/store, API client token refresh, secure storage, helpers
+npm run typecheck
+```
 
 ### Login to EAS
 ```bash
@@ -211,15 +230,17 @@ npx eas-cli update --branch production --message "Fix chat bug"
 - **`expo-doctor` complaints**: Run `npx expo-doctor` any time after adding dependencies or editing `app.json` — it catches asset/schema/duplicate-dependency issues before they cause native build failures.
 - **Native module added but app crashes / doesn't recognize it**: You're likely still running an old dev client build — rebuild it (§4).
 - **Duplicate native dependency versions**: Run `npm dedupe`, then `npx expo-doctor` to confirm.
+- **Sign-in says "Can't reach the server" or crashes on start**: Check `EXPO_PUBLIC_COGNITO_USER_POOL_ID` / `EXPO_PUBLIC_COGNITO_CLIENT_ID` are set (restart `expo start`), and that you're running a dev client built *after* Amplify was added.
+- **Signed in to Cognito but every API call returns 401**: The backend must use the same pool and client (`COGNITO_APP_USER_POOL_ID` / `COGNITO_APP_CLIENT_ID`), and the app must be sending the *access* token, not the ID token.
 
 ---
 
 ## 8. Project Structure Notes
 
 - Entry point: `index.ts` → `expo-router/entry` (file-based routing via the `app/` directory). The old CRA-style `App.tsx` template has been removed since it wasn't used.
-- `src/services/` — API + domain services (axios client, auth, chat, onboarding).
+- `src/services/` — API + domain services (axios client, auth, chat, onboarding, usage).
 - `src/store/` — Zustand stores, some with local SQLite caching for offline support (`src/db/sqlite.ts`).
-- `src/constants/config.ts` — reads `EXPO_PUBLIC_API_URL` from the environment; no hardcoded IP fallback.
+- `src/constants/config.ts` — reads `EXPO_PUBLIC_API_URL` and the Cognito pool/client IDs from the environment; no hardcoded IP fallback.
 
 # Issues
 - Landing page after creating an account not readable. Background is interrupting with the text. Text size is pretty small for the product description.

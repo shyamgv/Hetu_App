@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/auth.store';
 import { useProfileStore } from '../../src/store/profile.store';
+import { useUsageStore } from '../../src/store/usage.store';
+import { UsageMeter } from '../../src/components/usage/UsageMeter';
 import { Colors } from '../../src/constants/colors';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '../../src/constants/layout';
 
@@ -15,10 +17,19 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { profile, loadProfile } = useProfileStore();
+  const usage = useUsageStore((s) => s.usage);
+  const refreshUsage = useUsageStore((s) => s.refresh);
 
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Messages sent elsewhere use up the allowance, so refresh whenever this tab is shown
+  useFocusEffect(
+    useCallback(() => {
+      refreshUsage();
+    }, [refreshUsage])
+  );
 
   async function handleLogout() {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -63,6 +74,14 @@ export default function ProfileScreen() {
               )}
               {profile.bio && <InfoRow icon="document-text-outline" label="About" value={profile.bio} />}
             </View>
+          </View>
+        )}
+
+        {/* Daily allowance (hidden until loaded, e.g. while offline) */}
+        {usage && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Today's usage</Text>
+            <UsageMeter />
           </View>
         )}
 

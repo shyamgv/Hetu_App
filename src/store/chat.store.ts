@@ -2,9 +2,30 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { ChatService } from '../services/chat.service';
 import { SQLiteService } from '../db/sqlite';
+import { useUsageStore } from './usage.store';
+import { parseApiError, quotaMessage } from '../utils/errors';
 import type { ConversationOut, MessageOut } from '../types/api.types';
 
 let currentAbortController: AbortController | null = null;
+
+/** What went wrong with the last send/edit, so the screen can title the alert. */
+export type ChatErrorKind = 'offline' | 'quota' | 'busy' | 'failed';
+
+/**
+ * Error state for a send/edit the backend answered with an error. The daily limit and
+ * "previous message still running" refusals (HTTP 429) each get their own message.
+ */
+function chatFailure(e: unknown, failedMessage: string): { error: string; errorKind: ChatErrorKind } {
+  const info = parseApiError(e, failedMessage);
+  if (info.code === 'quota_exceeded') {
+    useUsageStore.getState().refresh();
+    return { error: quotaMessage(info.resetAt), errorKind: 'quota' };
+  }
+  if (info.code === 'request_in_flight') {
+    return { error: info.message, errorKind: 'busy' };
+  }
+  return { error: failedMessage, errorKind: 'failed' };
+}
 
 interface ChatState {
   conversations: ConversationOut[];
@@ -13,6 +34,7 @@ interface ChatState {
   isSending: boolean;
   isLoading: boolean;
   error: string | null;
+  errorKind: ChatErrorKind | null;
   defaultUseHetuEngine: boolean;
 
   // Actions
@@ -50,6 +72,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isSending: false,
   isLoading: false,
   error: null,
+  errorKind: null,
   defaultUseHetuEngine: true,
 
 
@@ -181,6 +204,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [...s.messages, optimisticUserMsg],
       isSending: true,
       error: null,
+      errorKind: null,
     }));
 
     try {
@@ -202,6 +226,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: [...s.messages, aiMsg],
         isSending: false,
       }));
+      useUsageStore.getState().refresh();
     } catch (e: any) {
       const isCanceled =
         axios.isCancel(e) ||
@@ -221,13 +246,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           messages: s.messages.filter((m) => m.id !== optimisticUserMsg.id),
           isSending: false,
           error: 'Internet connection required to chat with Hetu AI.',
+          errorKind: 'offline',
         }));
       } else {
         // Remove optimistic message on failure
         set((s) => ({
           messages: s.messages.filter((m) => m.id !== optimisticUserMsg.id),
           isSending: false,
-          error: 'Failed to send message',
+          ...chatFailure(e, 'Failed to send message'),
         }));
       }
     } finally {
@@ -257,6 +283,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: truncatedMessages,
       isSending: true,
       error: null,
+      errorKind: null,
     });
 
     try {
@@ -276,6 +303,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: [...s.messages, aiMsg],
         isSending: false,
       }));
+      useUsageStore.getState().refresh();
     } catch (e: any) {
       const isCanceled =
         axios.isCancel(e) ||
@@ -293,11 +321,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({
           isSending: false,
           error: 'Internet connection required to edit message.',
+          errorKind: 'offline',
+        });
+      } else if (e.response?.status === 429) {
+        // Refused before anything changed on the server, so put the conversation back as it was
+        set({
+          messages,
+          isSending: false,
+          ...chatFailure(e, 'Failed to edit message'),
         });
       } else {
         set({
           isSending: false,
-          error: 'Failed to edit message',
+          ...chatFailure(e, 'Failed to edit message'),
         });
       }
     } finally {

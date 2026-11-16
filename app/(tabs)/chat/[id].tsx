@@ -7,7 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useChatStore } from '../../../src/store/chat.store';
+import { useChatStore, type ChatErrorKind } from '../../../src/store/chat.store';
 import { useAuthStore } from '../../../src/store/auth.store';
 import { MessageBubble, TypingIndicator } from '../../../src/components/chat/MessageBubble';
 import { Colors } from '../../../src/constants/colors';
@@ -25,6 +25,13 @@ import {
 // a transcoding path is added.
 const VOICE_INPUT_SUPPORTED = Platform.OS === 'ios';
 
+const ERROR_TITLES: Record<ChatErrorKind, string> = {
+  offline: 'Offline Mode',
+  quota: 'Daily limit reached',
+  busy: 'Please wait',
+  failed: 'Something went wrong',
+};
+
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -32,7 +39,7 @@ export default function ChatScreen() {
 
   const isOffline = useAuthStore((s) => s.isOffline);
   const {
-    messages, activeConversation, isLoading, isSending, error,
+    messages, activeConversation, isLoading, isSending, error, errorKind,
     loadConversation, sendMessage, editLastMessage, stopSending,
     deleteConversation, submitFeedback, clearActive, endConversation,
   } = useChatStore();
@@ -76,7 +83,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('Offline Mode', error);
+      Alert.alert(ERROR_TITLES[errorKind ?? 'offline'], error);
     }
   }, [error]);
 

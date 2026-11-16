@@ -13,4 +13,18 @@ if (!process.env.EXPO_PUBLIC_API_URL) {
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
 
+/**
+ * Cognito user pool the app signs users in to (terraform outputs
+ * mobile_cognito_user_pool_id and mobile_cognito_client_id). Neither is a secret:
+ * the app client is public and has no secret.
+ */
+export const COGNITO_USER_POOL_ID = process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID ?? '';
+export const COGNITO_CLIENT_ID = process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID ?? '';
+
+if (!COGNITO_USER_POOL_ID || !COGNITO_CLIENT_ID) {
+  console.warn(
+    '[config] EXPO_PUBLIC_COGNITO_USER_POOL_ID / EXPO_PUBLIC_COGNITO_CLIENT_ID are not set, so sign-in will not work. See .env.example.'
+  );
+}
+
 export const IS_DEV = __DEV__;
